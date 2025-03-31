@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Env files
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE/editor settings
+.vscode/
+.DS_Store
+
+# Build
+dist/
+build/
