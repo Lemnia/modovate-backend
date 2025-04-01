@@ -17,3 +17,9 @@ pnpm-debug.log*
 # Build
 dist/
 build/
+
+.bfg-report/
+
+# BFG report and accidental repo copy
+modovate-backend.git.bfg-report/
+modovate-backend.git/
