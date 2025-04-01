@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors'); // ⬅️ Dodaj ovu liniju
 const corsOptions = {
   origin: 'https://modovatestudio.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
