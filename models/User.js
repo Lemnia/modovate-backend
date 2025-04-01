@@ -27,14 +27,19 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
 
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
+
   subscriptions: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Subscription', // moraš imati odgovarajući model za Subscription
+      ref: 'Subscription',
     }
   ],
 }, {
-  timestamps: true, // automatski dodaje createdAt i updatedAt
+  timestamps: true,
 });
 
 module.exports = mongoose.model('User', userSchema);

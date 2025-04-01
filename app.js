@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
@@ -58,5 +59,7 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running!' });
 });
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 module.exports = app;

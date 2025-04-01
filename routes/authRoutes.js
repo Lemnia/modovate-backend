@@ -39,4 +39,11 @@ router.post(
 // Logout
 router.post('/logout', authController.logout);
 
+// Auth status check via cookie
+router.get('/status', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.json({ isLoggedIn: false });
+  res.json({ isLoggedIn: true });
+});
+
 module.exports = router;

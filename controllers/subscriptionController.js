@@ -3,8 +3,10 @@ const User = require('../models/User');
 
 const createSubscription = async (req, res) => {
   try {
-    const { userId, game, tier } = req.body;
-    const sub = await Subscription.create({ user: userId, game, tier });
+    const userId = req.user.id;
+    const { game, tier, paymentMethod } = req.body;
+
+    const sub = await Subscription.create({ user: userId, game, tier, paymentMethod });
     await User.findByIdAndUpdate(userId, { $push: { subscriptions: sub._id } });
     res.status(201).json(sub);
   } catch (err) {
