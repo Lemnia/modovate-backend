@@ -1,8 +1,12 @@
 const express = require('express');
-const cors = require('cors');
+const corsOptions = {
+  origin: 'https://modovatestudio.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+};
 const app = express();
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rute
