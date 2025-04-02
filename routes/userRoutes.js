@@ -1,10 +1,9 @@
-// routes/userRoutes.js (dodatak za avatar upload)
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { requireAuth } = require('../middleware/authMiddleware');
+const requireAuth = require('../middleware/authMiddleware');
 const User = require('../models/User');
 
 // Folder za čuvanje avatara
@@ -21,10 +20,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Zaštita svih ruta ispod
-router.use(requireAuth);
+// ✅ Zaštita svih ruta ispod
+router.use((req, res, next) => requireAuth(req, res, next));
 
-// POST avatar upload
+// 📤 POST avatar upload
 router.post('/avatar', upload.single('avatar'), async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -39,7 +38,7 @@ router.post('/avatar', upload.single('avatar'), async (req, res) => {
   }
 });
 
-// GET current avatar URL
+// 📥 GET current avatar
 router.get('/avatar', async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
