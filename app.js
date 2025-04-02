@@ -7,6 +7,8 @@ const csrf = require('csurf');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
+const stripeRoutes = require('./routes/stripeRoutes');
+const webhookRoute = require('./routes/stripeWebhook');
 
 const app = express();
 
@@ -59,6 +61,9 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running!' });
 });
+app.use('/api', stripeRoutes);
+
+app.use('/api', webhookRoute);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
