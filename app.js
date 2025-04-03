@@ -10,20 +10,16 @@ const rateLimit = require('express-rate-limit');
 
 const stripeRoutes = require('./routes/stripeRoutes');
 const webhookRoute = require('./routes/stripeWebhook');
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const subscriptionRoutes = require('./routes/subscriptionRoutes');
-const tierRoutes = require('./routes/tierRoutes');
 
 const app = express();
 
-// ✅ Dozvoljeni domeni
+// ✅ Dozvoljeni frontend domeni
 const allowedOrigins = [
   'https://modovatestudio.com',
-  'https://www.modovatestudio.com',
+  'https://www.modovatestudio.com'
 ];
 
-// ✅ CORS
+// ✅ CORS konfiguracija
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -32,18 +28,18 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  exposedHeaders: ['XSRF-TOKEN']
+  optionsSuccessStatus: 200
 };
 
 // ✅ Rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minuta
   max: 100
 });
 
-// ✅ Middlewares
+// ✅ Security middlewares
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
@@ -53,31 +49,27 @@ app.use(limiter);
 app.use(xss());
 app.use(mongoSanitize());
 
-// ✅ Stripe webhook - mora biti PRE csrf
-app.use('/api', webhookRoute);
-
-// ✅ CSRF middleware
+// ✅ CSRF zaštita za cookie-based auth
 const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
-// ✅ Dodavanje CSRF tokena kao kolačić
+// ✅ Dodaj CSRF token kao kolačić za frontend
 app.use((req, res, next) => {
-  const token = req.csrfToken();
-  res.cookie('XSRF-TOKEN', token, {
-    httpOnly: false,
-    secure: true,
-    sameSite: 'None',
-    path: '/',
+  res.cookie('XSRF-TOKEN', req.csrfToken(), {
+    httpOnly: false,        // frontend može da ga pročita
+    secure: true,           // koristi se samo preko HTTPS
+    sameSite: 'None'        // omogući cross-site cookies
   });
   next();
 });
 
 // ✅ API rute
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/tiers', tierRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
+app.use('/api/tiers', require('./routes/tierRoutes'));
 app.use('/api', stripeRoutes);
+app.use('/api', webhookRoute);
 
 // ✅ Statika
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -90,14 +82,6 @@ app.get('/api/health', (req, res) => {
 // ✅ Root test ruta
 app.get('/', (req, res) => {
   res.send('Modovate Studio API is running...');
-});
-
-// ✅ Error handler za CSRF
-app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    return res.status(403).json({ error: 'Invalid CSRF token' });
-  }
-  next(err);
 });
 
 module.exports = app;
