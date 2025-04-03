@@ -48,6 +48,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+app.use(csrf({ cookie: true }));
 app.use(limiter);
 app.use(xss());
 app.use(mongoSanitize());
