@@ -6,9 +6,10 @@ const csrfProtection = csrf({ cookie: true });
 
 const router = express.Router();
 
-// Register route with validation & sanitization
+// ✅ Register route with validation, sanitization and CSRF protection
 router.post(
   '/register',
+  csrfProtection,
   [
     body('username')
       .trim()
@@ -24,9 +25,10 @@ router.post(
   authController.register
 );
 
-// Login route with validation & sanitization
+// ✅ Login route with validation, sanitization and CSRF protection
 router.post(
   '/login',
+  csrfProtection,
   [
     body('email')
       .isEmail().withMessage('Invalid email format')
@@ -38,20 +40,20 @@ router.post(
   authController.login
 );
 
-// Logout
-router.post('/logout', authController.logout);
+// ✅ Logout with CSRF protection
+router.post('/logout', csrfProtection, authController.logout);
 
-// Auth status check via cookie
+// ✅ Auth status check via cookie
 router.get('/status', (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.json({ isLoggedIn: false });
   res.json({ isLoggedIn: true });
 });
 
-// CSRF Token
+// ✅ CSRF token for frontend (GET only)
 router.get('/csrf-token', csrfProtection, (req, res) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
-    httpOnly: false, // da frontend može da ga pročita
+    httpOnly: false,
     secure: true,
     sameSite: 'None'
   });
