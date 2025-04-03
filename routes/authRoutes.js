@@ -2,14 +2,30 @@ const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const csrf = require('csurf');
-const csrfProtection = csrf({ cookie: true });
 
 const router = express.Router();
+const csrfProtection = csrf({ cookie: true });
 
-// ✅ Register route with validation, sanitization and CSRF protection
+// ✅ Auth status check via cookie
+router.get('/status', (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.json({ isLoggedIn: false });
+  res.json({ isLoggedIn: true });
+});
+
+// ✅ CSRF token za frontend
+router.get('/csrf-token', csrfProtection, (req, res) => {
+  res.cookie('XSRF-TOKEN', req.csrfToken(), {
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+  });
+  res.status(200).json({ message: 'CSRF token set' });
+});
+
+// ✅ Register route
 router.post(
   '/register',
-  csrfProtection,
   [
     body('username')
       .trim()
@@ -20,44 +36,26 @@ router.post(
       .normalizeEmail(),
     body('password')
       .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-      .escape()
+      .escape(),
   ],
   authController.register
 );
 
-// ✅ Login route with validation, sanitization and CSRF protection
+// ✅ Login route
 router.post(
   '/login',
-  csrfProtection,
   [
     body('email')
       .isEmail().withMessage('Invalid email format')
       .normalizeEmail(),
     body('password')
       .notEmpty().withMessage('Password is required')
-      .escape()
+      .escape(),
   ],
   authController.login
 );
 
-// ✅ Logout with CSRF protection
-router.post('/logout', csrfProtection, authController.logout);
-
-// ✅ Auth status check via cookie
-router.get('/status', (req, res) => {
-  const token = req.cookies.token;
-  if (!token) return res.json({ isLoggedIn: false });
-  res.json({ isLoggedIn: true });
-});
-
-// ✅ CSRF token for frontend (GET only)
-router.get('/csrf-token', csrfProtection, (req, res) => {
-  res.cookie('XSRF-TOKEN', req.csrfToken(), {
-    httpOnly: false,
-    secure: true,
-    sameSite: 'None'
-  });
-  res.status(200).json({ message: 'CSRF token set' });
-});
+// ✅ Logout route
+router.post('/logout', authController.logout);
 
 module.exports = router;

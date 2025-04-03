@@ -17,13 +17,13 @@ const tierRoutes = require('./routes/tierRoutes');
 
 const app = express();
 
-// ✅ CORS sa podrškom za više domena
+// ✅ Dozvoljeni domeni
 const allowedOrigins = [
   'https://modovatestudio.com',
   'https://www.modovatestudio.com',
-  'https://modovate-backend.onrender.com'
 ];
 
+// ✅ CORS
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -34,41 +34,40 @@ const corsOptions = {
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
-  exposedHeaders: ['XSRF-TOKEN']  // omogućava čitanje CSRF headera u browseru
+  exposedHeaders: ['XSRF-TOKEN']
 };
 
 // ✅ Rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minuta
+  windowMs: 15 * 60 * 1000,
   max: 100
 });
 
-// ✅ Security middlewares
+// ✅ Middlewares
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
-app.use(csrf({ cookie: true }));
 app.use(limiter);
 app.use(xss());
 app.use(mongoSanitize());
 
-// ✅ Stripe webhook NE SME da koristi csrf
-app.use('/api', webhookRoute); // mora ići PRE csrf middleware-a
+// ✅ Stripe webhook - mora biti PRE csrf
+app.use('/api', webhookRoute);
 
-// ✅ CSRF zaštita (samo posle Stripe webhook rute)
+// ✅ CSRF middleware
 const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
-// ✅ Dodaj CSRF token kao kolačić za frontend
+// ✅ Dodavanje CSRF tokena kao kolačić
 app.use((req, res, next) => {
   const token = req.csrfToken();
   res.cookie('XSRF-TOKEN', token, {
-    httpOnly: false,        // frontend može da pročita
-    secure: true,           // obavezno ako koristiš HTTPS
-    sameSite: 'None',       // dozvoljava cross-site request
-    path: '/'               // cookie važi svuda
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+    path: '/',
   });
   next();
 });
@@ -93,7 +92,7 @@ app.get('/', (req, res) => {
   res.send('Modovate Studio API is running...');
 });
 
-// ✅ CSRF error handler (obavezno!)
+// ✅ Error handler za CSRF
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
     return res.status(403).json({ error: 'Invalid CSRF token' });
