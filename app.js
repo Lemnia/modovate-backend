@@ -32,7 +32,8 @@ const corsOptions = {
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['XSRF-TOKEN']  // omogućava čitanje CSRF headera u browseru
 };
 
 // ✅ Rate limiter
