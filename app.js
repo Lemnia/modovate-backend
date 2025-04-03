@@ -8,18 +8,13 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 
-const stripeRoutes = require('./routes/stripeRoutes');
-const webhookRoute = require('./routes/stripeWebhook');
-
 const app = express();
 
-// ✅ Dozvoljeni frontend domeni
 const allowedOrigins = [
   'https://modovatestudio.com',
-  'https://www.modovatestudio.com'
+  'https://www.modovatestudio.com',
 ];
 
-// ✅ CORS konfiguracija
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -28,58 +23,47 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
-  optionsSuccessStatus: 200
 };
 
-// ✅ Rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minuta
+  windowMs: 15 * 60 * 1000,
   max: 100
 });
 
-// ✅ Security middlewares
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
-app.use(limiter);
 app.use(xss());
 app.use(mongoSanitize());
+app.use(limiter);
 
-// ✅ CSRF zaštita za cookie-based auth
-const csrfProtection = csrf({ cookie: true });
-app.use(csrfProtection);
+// ✅ CSRF protection
+app.use(csrf({
+  cookie: {
+    httpOnly: false,
+    sameSite: 'None',
+    secure: true,
+  }
+}));
 
-// ✅ Dodaj CSRF token kao kolačić za frontend
+// ✅ Set CSRF cookie for frontend
 app.use((req, res, next) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
-    httpOnly: false,        // frontend može da ga pročita
-    secure: true,           // koristi se samo preko HTTPS
-    sameSite: 'None'        // omogući cross-site cookies
+    httpOnly: false,
+    sameSite: 'None',
+    secure: true,
   });
   next();
 });
 
-// ✅ API rute
+// ✅ API routes
 app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
-app.use('/api/tiers', require('./routes/tierRoutes'));
-app.use('/api', stripeRoutes);
-app.use('/api', webhookRoute);
 
-// ✅ Statika
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// ✅ Health check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running!' });
-});
-
-// ✅ Root test ruta
+// ✅ Test route
 app.get('/', (req, res) => {
   res.send('Modovate Studio API is running...');
 });
