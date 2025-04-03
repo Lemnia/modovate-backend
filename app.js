@@ -12,24 +12,33 @@ const webhookRoute = require('./routes/stripeWebhook');
 
 const app = express();
 
-// CORS sa cookie podrškom
+// ✅ CORS sa podrškom za više domena
+const allowedOrigins = [
+  'https://modovatestudio.com',
+  'https://www.modovatestudio.com'
+];
+
 const corsOptions = {
-  origin: 'https://modovatestudio.com',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 };
 
-// Rate limiter
+// ✅ Rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minuta
   max: 100
 });
 
-// Helmet sa CSP za slike sa drugih domena
+// ✅ Security middlewares
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
-
-// Middlewares
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
@@ -37,34 +46,34 @@ app.use(limiter);
 app.use(xss());
 app.use(mongoSanitize());
 
-// CSRF zaštita – samo za cookie-based autentifikaciju
+// ✅ CSRF zaštita za cookie-based auth
 app.use(csrf({ cookie: true }));
 
-// Dodavanje CSRF tokena u response (za frontend)
+// ✅ Dodaj CSRF token kao kolačić za frontend
 app.use((req, res, next) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), { httpOnly: false, secure: true, sameSite: 'Strict' });
   next();
 });
 
-// Rute
+// ✅ API rute
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
 app.use('/api/tiers', require('./routes/tierRoutes'));
+app.use('/api', stripeRoutes);
+app.use('/api', webhookRoute);
 
-// Root ruta za test
-app.get('/', (req, res) => {
-  res.send('Modovate Studio API is running...');
-});
+// ✅ Statika
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check
+// ✅ Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running!' });
 });
-app.use('/api', stripeRoutes);
 
-app.use('/api', webhookRoute);
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ✅ Root test ruta
+app.get('/', (req, res) => {
+  res.send('Modovate Studio API is running...');
+});
 
 module.exports = app;
