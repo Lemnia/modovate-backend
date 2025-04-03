@@ -20,7 +20,7 @@ const app = express();
 // ✅ CORS sa podrškom za više domena
 const allowedOrigins = [
   'https://modovatestudio.com',
-  'https://www.modovatestudio.com'
+  'https://www.modovatestudio.com',
   'https://modovate-backend.onrender.com'
 ];
 
