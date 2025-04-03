@@ -45,7 +45,7 @@ app.use(limiter);
 app.use(csrf({
   cookie: {
     httpOnly: false,
-    sameSite: 'None',
+    sameSite: 'none',
     secure: true,
   }
 }));
@@ -54,7 +54,7 @@ app.use(csrf({
 app.use((req, res, next) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
     httpOnly: false,
-    sameSite: 'None',
+    sameSite: 'none',
     secure: true,
   });
   next();
