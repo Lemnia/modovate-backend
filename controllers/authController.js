@@ -1,9 +1,10 @@
+// controllers/authController.js
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 
-// Kreiranje JWT tokena sa property-jem "userId"
+// Create JWT token with property "userId"
 const createToken = (user) => {
   return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: '7d'
@@ -16,7 +17,7 @@ exports.register = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-
+  
   const { username, email, password } = req.body;
 
   try {

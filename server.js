@@ -1,3 +1,4 @@
+// server.js
 const mongoose = require('mongoose');
 const app = require('./app');
 require('dotenv').config();
@@ -18,5 +19,5 @@ mongoose
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1); // exit with failure
+    process.exit(1);
   });

@@ -1,3 +1,4 @@
+// routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -6,28 +7,26 @@ const fs = require('fs');
 const requireAuth = require('../middleware/authMiddleware');
 const User = require('../models/User');
 
-// Folder za čuvanje avatara
+// Folder for avatars
 const avatarFolder = path.join(__dirname, '..', 'uploads', 'avatars');
 if (!fs.existsSync(avatarFolder)) fs.mkdirSync(avatarFolder, { recursive: true });
 
-// Multer konfiguracija
+// Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, avatarFolder),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    // Koristimo req.user.userId
     cb(null, `${req.user.userId}${ext}`);
   },
 });
 const upload = multer({ storage });
 
-// Zaštita svih ruta ispod
-router.use((req, res, next) => requireAuth(req, res, next));
+// Protect all routes below
+router.use(requireAuth);
 
 // POST avatar upload
 router.post('/avatar', upload.single('avatar'), async (req, res) => {
   try {
-    // Pristupamo korisničkom ID-ju preko req.user.userId
     const user = await User.findById(req.user.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
