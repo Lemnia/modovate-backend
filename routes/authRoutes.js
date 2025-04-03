@@ -18,7 +18,7 @@ router.get('/status', (req, res) => {
 router.get('/csrf-token', csrfProtection, (req, res) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
     httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     sameSite: 'none',
 	domain: '.modovatestudio.com'
   });
