@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 
-// JWT token creation
+// Kreiranje JWT tokena sa property-jem "userId"
 const createToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: '7d'
   });
 };
@@ -24,7 +24,6 @@ exports.register = async (req, res) => {
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 12);
-
     const newUser = new User({ username, email, password: hashedPassword });
     await newUser.save();
 

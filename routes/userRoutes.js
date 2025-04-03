@@ -15,18 +15,20 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, avatarFolder),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `${req.user.id}${ext}`);
+    // Koristimo req.user.userId
+    cb(null, `${req.user.userId}${ext}`);
   },
 });
 const upload = multer({ storage });
 
-// ✅ Zaštita svih ruta ispod
+// Zaštita svih ruta ispod
 router.use((req, res, next) => requireAuth(req, res, next));
 
-// 📤 POST avatar upload
+// POST avatar upload
 router.post('/avatar', upload.single('avatar'), async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // Pristupamo korisničkom ID-ju preko req.user.userId
+    const user = await User.findById(req.user.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     user.avatar = `/uploads/avatars/${req.file.filename}`;
@@ -38,10 +40,10 @@ router.post('/avatar', upload.single('avatar'), async (req, res) => {
   }
 });
 
-// 📥 GET current avatar
+// GET current avatar
 router.get('/avatar', async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.userId);
     if (!user || !user.avatar) return res.json({ avatarUrl: null });
     res.json({ avatarUrl: user.avatar });
   } catch (err) {
