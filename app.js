@@ -7,8 +7,13 @@ const csrf = require('csurf');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
+
 const stripeRoutes = require('./routes/stripeRoutes');
 const webhookRoute = require('./routes/stripeWebhook');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const tierRoutes = require('./routes/tierRoutes');
 
 const app = express();
 
@@ -46,22 +51,29 @@ app.use(limiter);
 app.use(xss());
 app.use(mongoSanitize());
 
-// ✅ CSRF zaštita za cookie-based auth
-app.use(csrf({ cookie: true }));
+// ✅ Stripe webhook NE SME da koristi csrf
+app.use('/api', webhookRoute); // mora ići PRE csrf middleware-a
+
+// ✅ CSRF zaštita (samo posle Stripe webhook rute)
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection);
 
 // ✅ Dodaj CSRF token kao kolačić za frontend
 app.use((req, res, next) => {
-  res.cookie('XSRF-TOKEN', req.csrfToken(), { httpOnly: false, secure: true, sameSite: 'Strict' });
+  res.cookie('XSRF-TOKEN', req.csrfToken(), {
+    httpOnly: false,
+    secure: true,
+    sameSite: 'Strict'
+  });
   next();
 });
 
 // ✅ API rute
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
-app.use('/api/tiers', require('./routes/tierRoutes'));
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/tiers', tierRoutes);
 app.use('/api', stripeRoutes);
-app.use('/api', webhookRoute);
 
 // ✅ Statika
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -74,6 +86,14 @@ app.get('/api/health', (req, res) => {
 // ✅ Root test ruta
 app.get('/', (req, res) => {
   res.send('Modovate Studio API is running...');
+});
+
+// ✅ CSRF error handler (obavezno!)
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({ error: 'Invalid CSRF token' });
+  }
+  next(err);
 });
 
 module.exports = app;
