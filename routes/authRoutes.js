@@ -20,6 +20,7 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none',
+	domain: '.modovatestudio.com'
   });
   res.status(200).json({ message: 'CSRF token set' });
 });
