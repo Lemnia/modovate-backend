@@ -63,10 +63,12 @@ app.use(csrfProtection);
 
 // ✅ Dodaj CSRF token kao kolačić za frontend
 app.use((req, res, next) => {
-  res.cookie('XSRF-TOKEN', req.csrfToken(), {
-    httpOnly: false,
-    secure: true,
-    sameSite: 'None'
+  const token = req.csrfToken();
+  res.cookie('XSRF-TOKEN', token, {
+    httpOnly: false,        // frontend može da pročita
+    secure: true,           // obavezno ako koristiš HTTPS
+    sameSite: 'None',       // dozvoljava cross-site request
+    path: '/'               // cookie važi svuda
   });
   next();
 });
