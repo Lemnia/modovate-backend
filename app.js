@@ -21,6 +21,7 @@ const app = express();
 const allowedOrigins = [
   'https://modovatestudio.com',
   'https://www.modovatestudio.com'
+  'https://modovate-backend.onrender.com'
 ];
 
 const corsOptions = {
