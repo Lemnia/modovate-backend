@@ -18,9 +18,8 @@ router.get('/status', (req, res) => {
 router.get('/csrf-token', csrfProtection, (req, res) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
     httpOnly: false,
-    secure: false,
+    secure: true,
     sameSite: 'none',
-	domain: '.modovatestudio.com'
   });
   res.status(200).json({ message: 'CSRF token set' });
 });
