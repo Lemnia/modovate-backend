@@ -36,8 +36,8 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
         <td align="center">
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px;">
             <tr>
-              <td style="background-image: url('https://www.modovatestudio.com/assets/email/header-background.png'); background-size: cover; background-position: center; padding: 60px 0;">
-                <img src="https://www.modovatestudio.com/assets/logo/Logotip_transparent_notext.png" alt="Modovate Studio" width="180" style="display: block; margin: auto;">
+              <td style="background-image: url('https://www.modovatestudio.com/assets/email/header-background.png'); background-size: cover; background-position: center; padding: 120px 0;">
+                <!-- Logo je uklonjen, jer se nalazi već u pozadinskoj slici -->
               </td>
             </tr>
 
@@ -55,7 +55,7 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
 
                 <p style="font-size: 14px; color: #cccccc; margin-top: 20px;">
                   If the button above doesn't work, copy and paste the link below into your browser:<br>
-                  <a href="${confirmationLink}" style="color: #00B8B8; word-break: break-all;">${confirmationLink}</a>
+                  <a href="${confirmationLink}" style="color: #00B8B8; word-break: break-word;">${confirmationLink}</a>
                 </p>
               </td>
             </tr>
