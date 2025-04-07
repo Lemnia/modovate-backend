@@ -34,7 +34,7 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
     <div style="background: linear-gradient(to bottom, #000000, #1a1a1a); padding: 30px; font-family: Arial, sans-serif; color: #ffffff;">
       <div style="max-width: 600px; margin: auto; background: #111418; padding: 20px; border-radius: 10px; border: 1px solid #F47800;">
         <div style="text-align: center;">
-          <img src="https://modovatestudio.com/logo.png" alt="Modovate Studio" style="width: 150px; margin-bottom: 20px;" />
+          <img src="https://www.modovatestudio.com/logo.png" alt="Modovate Studio" style="width: 150px; margin-bottom: 20px;" />
         </div>
         <h2 style="text-align: center; color: #00B8B8;">Welcome to Modovate Studio!</h2>
         <p>Hi <strong>${username}</strong>,</p>
