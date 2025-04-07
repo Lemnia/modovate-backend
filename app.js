@@ -10,6 +10,8 @@ const xss = require('xss-clean');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.set('trust proxy', 1);
+
 
 const allowedOrigins = [
   'https://modovatestudio.com',
