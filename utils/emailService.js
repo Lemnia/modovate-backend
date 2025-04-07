@@ -1,3 +1,4 @@
+// utils/emailService.js
 const { Client } = require('@microsoft/microsoft-graph-client');
 const { ConfidentialClientApplication } = require('@azure/msal-node');
 
@@ -36,12 +37,14 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
         <td align="center">
           <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px;">
 
+            <!-- HEADER -->
             <tr>
               <td style="background-image: url('https://www.modovatestudio.com/assets/email/header-background.png'); background-size: cover; background-position: center; padding: 120px 0;">
-                <!-- Logo je uključen u pozadinsku sliku -->
+                <!-- Logo is integrated into background image -->
               </td>
             </tr>
 
+            <!-- MAIN CONTENT -->
             <tr>
               <td style="background-color: #111418; padding: 40px 30px; border: 1px solid #F47800; border-top: none; text-align: center; font-family: Arial, sans-serif; color: #ffffff;">
                 
@@ -76,6 +79,7 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
               </td>
             </tr>
 
+            <!-- FOOTER -->
             <tr>
               <td style="background-color: #0b0e11; padding: 20px; text-align: center; font-family: Arial, sans-serif; font-size: 12px; color: #888888;">
                 © 2025 Modovate Studio. All rights reserved.<br>
