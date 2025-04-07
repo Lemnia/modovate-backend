@@ -4,9 +4,6 @@ const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
-const { Client } = require('@microsoft/microsoft-graph-client');
-require('isomorphic-fetch');
 
 // Create JWT token
 const createToken = (user) => {
@@ -15,25 +12,17 @@ const createToken = (user) => {
   });
 };
 
-// Setup OAuth2 client for Outlook
-const { OUTLOOK_CLIENT_ID, OUTLOOK_CLIENT_SECRET, OUTLOOK_TENANT_ID, OUTLOOK_CLIENT_SECRET_VALUE, OUTLOOK_EMAIL } = process.env;
-
-const outlookOAuth2Config = {
-  clientId: OUTLOOK_CLIENT_ID,
-  clientSecret: OUTLOOK_CLIENT_SECRET_VALUE, // Ovo je client secret koji si sad generisala
-  tenantId: OUTLOOK_TENANT_ID,
-  authorityHostUrl: 'https://login.microsoftonline.com',
-  scopes: ['https://graph.microsoft.com/.default'],
-};
+// Setup OAuth2 config for Outlook
+const { OUTLOOK_CLIENT_ID, OUTLOOK_CLIENT_SECRET_VALUE, OUTLOOK_TENANT_ID, OUTLOOK_EMAIL } = process.env;
 
 // Function to get access token
 const getOutlookAccessToken = async () => {
-  const url = `https://login.microsoftonline.com/${outlookOAuth2Config.tenantId}/oauth2/v2.0/token`;
+  const url = `https://login.microsoftonline.com/${OUTLOOK_TENANT_ID}/oauth2/v2.0/token`;
 
   const params = new URLSearchParams();
-  params.append('client_id', outlookOAuth2Config.clientId);
+  params.append('client_id', OUTLOOK_CLIENT_ID);
   params.append('scope', 'https://graph.microsoft.com/.default');
-  params.append('client_secret', outlookOAuth2Config.clientSecret);
+  params.append('client_secret', OUTLOOK_CLIENT_SECRET_VALUE);
   params.append('grant_type', 'client_credentials');
 
   const response = await fetch(url, {
@@ -58,9 +47,9 @@ const sendWelcomeEmail = async (toEmail, username) => {
       type: 'OAuth2',
       user: OUTLOOK_EMAIL,
       accessToken,
-      clientId: outlookOAuth2Config.clientId,
-      clientSecret: outlookOAuth2Config.clientSecret,
-      tenantId: outlookOAuth2Config.tenantId,
+      clientId: OUTLOOK_CLIENT_ID,
+      clientSecret: OUTLOOK_CLIENT_SECRET_VALUE,
+      tenantId: OUTLOOK_TENANT_ID,
     },
   });
 
@@ -107,7 +96,7 @@ exports.register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // 📩 Šaljemo dobrodošlicu
+    // 📩 Send welcome email
     await sendWelcomeEmail(email, username);
 
     res.status(201).json({ message: 'User registered successfully' });
