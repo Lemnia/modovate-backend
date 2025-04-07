@@ -1,78 +1,37 @@
 // app.js
 const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const helmet = require('helmet');
+const authRoutes = require('./routes/authRoutes');
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
-const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 
 const app = express();
-app.set('trust proxy', 1);
 
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
 
-const allowedOrigins = [
-  'https://modovatestudio.com',
-  'https://www.modovatestudio.com',
-];
-
+// CORS (dozvoljavamo samo sa frontend domena)
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: ['https://www.modovatestudio.com'],
   credentials: true,
 };
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
-});
-
-app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
-app.use(cookieParser());
-app.use(express.json());
-app.use(xss());
-app.use(mongoSanitize());
-app.use(limiter);
 
-// CSRF protection middleware
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: false,
-    sameSite: 'none',
-    secure: process.env.NODE_ENV === 'production',
-  }
-});
-app.use(csrfProtection);
+// CSRF zaštita
+const csrfProtection = csrf({ cookie: true });
 
-// Set CSRF cookie for the frontend
-app.use((req, res, next) => {
+// Rute
+app.use('/api/auth', authRoutes);
+
+// CSRF ruta
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
     httpOnly: false,
+    secure: true,
     sameSite: 'none',
-    secure: process.env.NODE_ENV === 'production',
-    // Uncomment the following if you need to force the cookie domain to your frontend:
-    // domain: 'modovatestudio.com',
   });
-  next();
-});
-
-// API routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/user', require('./routes/userRoutes')); // if applicable
-
-// Test route
-app.get('/', (req, res) => {
-  res.send('Modovate Studio API is running...');
+  res.status(200).json({ message: 'CSRF token set' });
 });
 
 module.exports = app;
