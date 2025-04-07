@@ -1,3 +1,4 @@
+// routes/authRoutes.js
 const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
@@ -6,14 +7,14 @@ const csrf = require('csurf');
 const router = express.Router();
 const csrfProtection = csrf({ cookie: true });
 
-// ========== CHECK AUTHENTICATION STATUS ==========
+// ========== STATUS ==========
 router.get('/status', (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.json({ isLoggedIn: false });
   res.json({ isLoggedIn: true });
 });
 
-// ========== CSRF TOKEN SET ==========
+// ========== CSRF TOKEN ==========
 router.get('/csrf-token', csrfProtection, (req, res) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
     httpOnly: false,
@@ -27,16 +28,10 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
 router.post(
   '/register',
   [
-    body('username')
-      .trim()
-      .notEmpty().withMessage('Username is required')
-      .escape(),
-    body('email')
-      .isEmail().withMessage('Invalid email format')
-      .normalizeEmail(),
-    body('password')
-      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-      .escape(),
+    body('username').trim().notEmpty().escape(),
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 6 }).escape(),
+    body('confirmPassword').isLength({ min: 6 }).escape(),
   ],
   authController.register
 );
@@ -48,12 +43,8 @@ router.get('/verify-email/:token', authController.verifyEmail);
 router.post(
   '/login',
   [
-    body('email')
-      .isEmail().withMessage('Invalid email format')
-      .normalizeEmail(),
-    body('password')
-      .notEmpty().withMessage('Password is required')
-      .escape(),
+    body('email').isEmail().normalizeEmail(),
+    body('password').notEmpty().escape(),
   ],
   authController.login
 );
@@ -65,9 +56,7 @@ router.post('/logout', authController.logout);
 router.post(
   '/forgot-password',
   [
-    body('email')
-      .isEmail().withMessage('Invalid email format')
-      .normalizeEmail(),
+    body('email').isEmail().normalizeEmail(),
   ],
   authController.forgotPassword
 );
@@ -76,9 +65,7 @@ router.post(
 router.post(
   '/reset-password/:token',
   [
-    body('newPassword')
-      .isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
-      .escape(),
+    body('newPassword').isLength({ min: 6 }).escape(),
   ],
   authController.resetPassword
 );

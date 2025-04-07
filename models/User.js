@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 
-  // ➔ Email potvrda
   isVerified: {
     type: Boolean,
     default: false,
@@ -29,21 +28,6 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
 
-  // ➔ Admin flag
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
-
-  // ➔ Pretplate korisnika
-  subscriptions: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Subscription',
-    }
-  ],
-
-  // ➔ Reset Password
   resetPasswordToken: {
     type: String,
   },
@@ -51,6 +35,18 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date,
   },
+
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
+
+  subscriptions: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Subscription',
+    }
+  ],
 }, {
   timestamps: true,
 });

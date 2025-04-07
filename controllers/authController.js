@@ -1,3 +1,4 @@
+// controllers/authController.js
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
@@ -5,7 +6,6 @@ const User = require('../models/User');
 const crypto = require('crypto');
 const { sendCustomEmail } = require('../utils/emailService');
 
-// ➔ Kreiranje JWT tokena
 const createToken = (user) => {
   return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: '7d'
@@ -19,7 +19,11 @@ exports.register = async (req, res) => {
     return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
   }
 
-  const { username, email, password } = req.body;
+  const { username, email, password, confirmPassword } = req.body;
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ message: 'Passwords do not match' });
+  }
 
   try {
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
