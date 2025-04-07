@@ -38,14 +38,16 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
 
             <tr>
               <td style="background-image: url('https://www.modovatestudio.com/assets/email/header-background.png'); background-size: cover; background-position: center; padding: 120px 0;">
-                <!-- Logo je već uključen u pozadinsku sliku -->
+                <!-- Logo je uključen u pozadinsku sliku -->
               </td>
             </tr>
 
             <tr>
               <td style="background-color: #111418; padding: 40px 30px; border: 1px solid #F47800; border-top: none; text-align: center; font-family: Arial, sans-serif; color: #ffffff;">
                 
-                <h1 style="color: #00B8B8; font-size: 30px; margin-bottom: 25px;">Welcome to Modovate Studio!</h1>
+                <h1 style="color: #00B8B8; font-size: 34px; font-weight: 900; text-shadow: 1px 1px 2px #000000; margin-bottom: 30px;">
+                  Welcome to Modovate Studio!
+                </h1>
 
                 <p style="font-size: 16px; line-height: 28px; margin-bottom: 25px;">
                   Hi <strong>${username}</strong>,
@@ -63,11 +65,11 @@ const sendVerificationEmail = async (recipientEmail, username, confirmationToken
                   Verify My Email
                 </a>
 
-                <p style="font-size: 14px; color: #cccccc; margin-top: 20px; line-height: 22px;">
+                <p style="font-size: 12px; color: #cccccc; margin-top: 20px; line-height: 22px;">
                   If the button above doesn't work, simply copy and paste the following link into your browser:
                 </p>
 
-                <p style="font-size: 14px; color: #00B8B8; word-break: break-word; margin-top: 10px;">
+                <p style="font-size: 12px; color: #00B8B8; word-break: break-word; margin-top: 10px;">
                   <a href="${confirmationLink}" style="color: #00B8B8;">${confirmationLink}</a>
                 </p>
 
