@@ -42,6 +42,15 @@ const userSchema = new mongoose.Schema({
       ref: 'Subscription',
     }
   ],
+
+  // ➔ Reset Password
+  resetPasswordToken: {
+    type: String,
+  },
+
+  resetPasswordExpires: {
+    type: Date,
+  },
 }, {
   timestamps: true,
 });

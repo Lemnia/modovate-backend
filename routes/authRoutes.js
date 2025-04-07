@@ -1,4 +1,3 @@
-// routes/authRoutes.js
 const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
@@ -7,14 +6,14 @@ const csrf = require('csurf');
 const router = express.Router();
 const csrfProtection = csrf({ cookie: true });
 
-// Check authentication status via cookie
+// ========== CHECK AUTHENTICATION STATUS ==========
 router.get('/status', (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.json({ isLoggedIn: false });
   res.json({ isLoggedIn: true });
 });
 
-// CSRF token endpoint
+// ========== CSRF TOKEN SET ==========
 router.get('/csrf-token', csrfProtection, (req, res) => {
   res.cookie('XSRF-TOKEN', req.csrfToken(), {
     httpOnly: false,
@@ -24,7 +23,7 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
   res.status(200).json({ message: 'CSRF token set' });
 });
 
-// Register route
+// ========== REGISTER ==========
 router.post(
   '/register',
   [
@@ -42,10 +41,10 @@ router.post(
   authController.register
 );
 
-// Verify Email
+// ========== VERIFY EMAIL ==========
 router.get('/verify-email/:token', authController.verifyEmail);
 
-// Login route
+// ========== LOGIN ==========
 router.post(
   '/login',
   [
@@ -59,7 +58,29 @@ router.post(
   authController.login
 );
 
-// Logout route
+// ========== LOGOUT ==========
 router.post('/logout', authController.logout);
+
+// ========== FORGOT PASSWORD ==========
+router.post(
+  '/forgot-password',
+  [
+    body('email')
+      .isEmail().withMessage('Invalid email format')
+      .normalizeEmail(),
+  ],
+  authController.forgotPassword
+);
+
+// ========== RESET PASSWORD ==========
+router.post(
+  '/reset-password/:token',
+  [
+    body('newPassword')
+      .isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+      .escape(),
+  ],
+  authController.resetPassword
+);
 
 module.exports = router;
