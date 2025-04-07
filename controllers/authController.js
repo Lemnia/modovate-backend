@@ -2,67 +2,68 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
-const User = require('../models/User');
 const nodemailer = require('nodemailer');
+const User = require('../models/User');
+const { Client } = require('@microsoft/microsoft-graph-client');
+const { ConfidentialClientApplication } = require('@azure/msal-node');
 
-// Create JWT token
+// Kreiraj JWT token sa userId
 const createToken = (user) => {
   return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-    expiresIn: '7d',
+    expiresIn: '7d'
   });
 };
 
-// Setup OAuth2 config for Outlook
-const { OUTLOOK_CLIENT_ID, OUTLOOK_CLIENT_SECRET_VALUE, OUTLOOK_TENANT_ID, OUTLOOK_EMAIL } = process.env;
-
-// Function to get access token
-const getOutlookAccessToken = async () => {
-  const url = `https://login.microsoftonline.com/${OUTLOOK_TENANT_ID}/oauth2/v2.0/token`;
-
-  const params = new URLSearchParams();
-  params.append('client_id', OUTLOOK_CLIENT_ID);
-  params.append('scope', 'https://graph.microsoft.com/.default');
-  params.append('client_secret', OUTLOOK_CLIENT_SECRET_VALUE);
-  params.append('grant_type', 'client_credentials');
-
-  const response = await fetch(url, {
-    method: 'POST',
-    body: params,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(`Failed to get access token: ${data.error_description}`);
+// Konfiguriši MSAL klijenta
+const msalConfig = {
+  auth: {
+    clientId: process.env.OUTLOOK_CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${process.env.OUTLOOK_TENANT_ID}`,
+    clientSecret: process.env.OUTLOOK_CLIENT_SECRET,
   }
-  return data.access_token;
 };
 
-// Send welcome email
-const sendWelcomeEmail = async (toEmail, username) => {
-  const accessToken = await getOutlookAccessToken();
+const cca = new ConfidentialClientApplication(msalConfig);
 
-  const transporter = nodemailer.createTransport({
-    service: 'Outlook365',
-    auth: {
-      type: 'OAuth2',
-      user: OUTLOOK_EMAIL,
-      accessToken,
-      clientId: OUTLOOK_CLIENT_ID,
-      clientSecret: OUTLOOK_CLIENT_SECRET_VALUE,
-      tenantId: OUTLOOK_TENANT_ID,
+// Funkcija za dobijanje access tokena
+const getAccessToken = async () => {
+  const result = await cca.acquireTokenByClientCredential({
+    scopes: ['https://graph.microsoft.com/.default'],
+  });
+  return result.accessToken;
+};
+
+// Funkcija za slanje maila preko Outlook Graph API
+const sendWelcomeEmail = async (recipientEmail, username) => {
+  const accessToken = await getAccessToken();
+
+  const client = Client.init({
+    authProvider: (done) => {
+      done(null, accessToken);
     },
   });
 
-  await transporter.sendMail({
-    from: `"Modovate Studio" <${OUTLOOK_EMAIL}>`,
-    to: toEmail,
-    subject: 'Welcome to Modovate Studio!',
-    text: `Hello ${username},\n\nWelcome to Modovate Studio! We're thrilled to have you.\n\nEnjoy!\nThe Modovate Team`,
-    html: `<h1>Hello ${username},</h1><p>Welcome to <strong>Modovate Studio</strong>! We're thrilled to have you.<br><br>Enjoy!<br><strong>The Modovate Team</strong></p>`,
-  });
+  await client.api('/users/' + process.env.OUTLOOK_EMAIL + '/sendMail')
+    .post({
+      message: {
+        subject: 'Welcome to Modovate Studio!',
+        body: {
+          contentType: 'Text',
+          content: `Hello ${username},\n\nWelcome to Modovate Studio! We are excited to have you with us.\n\nBest regards,\nModovate Studio Team`,
+        },
+        toRecipients: [
+          {
+            emailAddress: {
+              address: recipientEmail,
+            },
+          },
+        ],
+      },
+      saveToSentItems: 'false',
+    });
 };
 
-// REGISTER
+// ========== REGISTRACIJA ==========
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -93,10 +94,10 @@ exports.register = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    // 📩 Send welcome email
+    // Pošalji email korisniku
     await sendWelcomeEmail(email, username);
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -106,7 +107,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// LOGIN
+// ========== LOGIN ==========
 exports.login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
@@ -126,7 +127,7 @@ exports.login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     res.status(200).json({ message: 'Login successful' });
@@ -136,7 +137,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// LOGOUT
+// ========== LOGOUT ==========
 exports.logout = (req, res) => {
   res.clearCookie('token');
   res.status(200).json({ message: 'Logged out successfully' });
