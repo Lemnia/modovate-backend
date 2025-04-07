@@ -19,20 +19,23 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 
-  confirmed: {
+  // ➔ Email potvrda
+  isVerified: {
     type: Boolean,
     default: false,
   },
 
-  confirmationToken: {
+  verificationToken: {
     type: String,
   },
 
+  // ➔ Admin flag
   isAdmin: {
     type: Boolean,
     default: false,
   },
 
+  // ➔ Pretplate korisnika
   subscriptions: [
     {
       type: mongoose.Schema.Types.ObjectId,

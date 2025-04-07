@@ -42,6 +42,9 @@ router.post(
   authController.register
 );
 
+// Verify Email
+router.get('/verify-email/:token', authController.verifyEmail);
+
 // Login route
 router.post(
   '/login',

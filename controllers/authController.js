@@ -2,65 +2,15 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
-const nodemailer = require('nodemailer');
 const User = require('../models/User');
-const { Client } = require('@microsoft/microsoft-graph-client');
-const { ConfidentialClientApplication } = require('@azure/msal-node');
+const crypto = require('crypto');
+const { sendVerificationEmail } = require('../utils/emailService');
 
-// Kreiraj JWT token sa userId
+// Kreiranje JWT tokena
 const createToken = (user) => {
   return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
     expiresIn: '7d'
   });
-};
-
-// Konfiguriši MSAL klijenta
-const msalConfig = {
-  auth: {
-    clientId: process.env.OUTLOOK_CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${process.env.OUTLOOK_TENANT_ID}`,
-    clientSecret: process.env.OUTLOOK_CLIENT_SECRET,
-  }
-};
-
-const cca = new ConfidentialClientApplication(msalConfig);
-
-// Funkcija za dobijanje access tokena
-const getAccessToken = async () => {
-  const result = await cca.acquireTokenByClientCredential({
-    scopes: ['https://graph.microsoft.com/.default'],
-  });
-  return result.accessToken;
-};
-
-// Funkcija za slanje maila preko Outlook Graph API
-const sendWelcomeEmail = async (recipientEmail, username) => {
-  const accessToken = await getAccessToken();
-
-  const client = Client.init({
-    authProvider: (done) => {
-      done(null, accessToken);
-    },
-  });
-
-  await client.api('/users/' + process.env.OUTLOOK_EMAIL + '/sendMail')
-    .post({
-      message: {
-        subject: 'Welcome to Modovate Studio!',
-        body: {
-          contentType: 'Text',
-          content: `Hello ${username},\n\nWelcome to Modovate Studio! We are excited to have you with us.\n\nBest regards,\nModovate Studio Team`,
-        },
-        toRecipients: [
-          {
-            emailAddress: {
-              address: recipientEmail,
-            },
-          },
-        ],
-      },
-      saveToSentItems: 'false',
-    });
 };
 
 // ========== REGISTRACIJA ==========
@@ -85,22 +35,22 @@ exports.register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = new User({ username, email, password: hashedPassword });
-    await newUser.save();
+    const confirmationToken = crypto.randomBytes(32).toString('hex');
 
-    const token = createToken(newUser);
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      confirmationToken,
+      confirmed: false,
     });
 
-    // Pošalji email korisniku
-    await sendWelcomeEmail(email, username);
+    await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
+    // Pošalji verifikacioni email
+    await sendVerificationEmail(email, username, confirmationToken);
+
+    res.status(201).json({ message: 'Registration successful. Please check your email to confirm your account.' });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error during registration.' });
@@ -120,6 +70,10 @@ exports.login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
+
+    if (!user.confirmed) {
+      return res.status(403).json({ message: 'Please confirm your email address before logging in.' });
+    }
 
     const token = createToken(user);
 
@@ -141,4 +95,26 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
   res.clearCookie('token');
   res.status(200).json({ message: 'Logged out successfully' });
+};
+
+// ========== VERIFY EMAIL ==========
+exports.verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const user = await User.findOne({ confirmationToken: token });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired confirmation token.' });
+    }
+
+    user.confirmed = true;
+    user.confirmationToken = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Email confirmed successfully. You can now log in.' });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({ message: 'Server error during email verification.' });
+  }
 };
